@@ -1,0 +1,63 @@
+packages:
+  - downloader
+  - plyr
+
+sources:
+  - R
+
+plot_options:
+  6by8:
+    height: 6
+    width: 8
+
+targets:
+  all:
+    depends:
+      - tables
+      - figures
+
+  downloads/gapminder.csv:
+    command: download_gapminder(target_name)
+    cleanup_level: purge
+
+  data:
+    command: read.csv("downloads/gapminder.csv", stringsAsFactors=FALSE)
+
+  tables:
+    depends:
+      - output/model_summary.csv
+
+  models:
+    command: fit_models(data)
+
+  output/model_summary.csv:
+    command: write.csv(models, target_name, row.names=FALSE)
+
+  figures:
+    depends:
+      - output/figures/1982.pdf
+      - output/figures/1987.pdf
+
+  output/figures/1982.pdf:
+    command: figure_1982(data)
+    plot:
+      height: 6
+      width: 8
+
+  output/figures/1987.pdf:
+    command: figure_year(data, 1987)
+    plot: 6by8
+
+  report.md:
+    packages: knitr
+    knitr: TRUE
+    depends:
+      - data
+
+  report.docx:
+    packages: rmarkdown
+    command: render("report.md", I("word_document"), quiet=TRUE)
+
+  report.html:
+    packages: rmarkdown
+    command: render("report.md", I("html_document"), quiet=TRUE)
